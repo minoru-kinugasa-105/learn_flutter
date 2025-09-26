@@ -12,11 +12,58 @@ class TodoHomePage extends StatefulWidget {
   State<TodoHomePage> createState() => _TodoHomePageState();
 }
 
-class _TodoHomePageState extends State<TodoHomePage> {
+class _TodoHomePageState extends State<TodoHomePage>
+    with TickerProviderStateMixin {
+  late TabController _tabController;
+  late List<ScrollController> _scrollControllers;
+
   @override
   void initState() {
     super.initState();
     _initializeHive();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
+    // TabControllerを作成
+    _tabController = TabController(length: 3, vsync: this);
+
+    // 各タブ用のScrollControllerを作成
+    _scrollControllers = List.generate(3, (index) => ScrollController());
+
+    // タブ切り替え時のリスナーを追加
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    // タブが切り替わった時に、そのタブのスクロール位置を一番上に戻す
+    if (_tabController.indexIsChanging) {
+      setState(() {}); // タブの内容を更新
+
+      final currentIndex = _tabController.index;
+      final controller = _scrollControllers[currentIndex];
+
+      // 少し遅延を入れてスクロール位置をリセット
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (controller.hasClients) {
+          controller.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // ScrollControllerとTabControllerを適切に解放
+    for (final controller in _scrollControllers) {
+      controller.dispose();
+    }
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeHive() async {
@@ -99,50 +146,38 @@ class _TodoHomePageState extends State<TodoHomePage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Todo App'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: '未完了'),
-              Tab(text: '完了済み'),
-              Tab(text: '削除済み'),
-            ],
+    return Scaffold(
+      body: CustomScrollView(
+        controller: _scrollControllers[_tabController.index],
+        slivers: [
+          SliverAppBar(
+            title: const Text('Todo App'),
+            floating: true,
+            snap: true,
+            pinned: true,
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: '未完了'),
+                Tab(text: '完了済み'),
+                Tab(text: '削除済み'),
+              ],
+            ),
           ),
-        ),
-        body: TabBarView(
-          children: [
-            // 未完了タブ
-            TodoListWidget(
-              tabIndex: 0,
-              onUpdateTodo: _updateTodo,
-              onCopyTodo: _copyTodo,
-              onEditTodo: _editTodo,
-            ),
-            // 完了済みタブ
-            TodoListWidget(
-              tabIndex: 1,
-              onUpdateTodo: _updateTodo,
-              onCopyTodo: _copyTodo,
-              onEditTodo: _editTodo,
-            ),
-            // 削除済みタブ
-            TodoListWidget(
-              tabIndex: 2,
-              onUpdateTodo: _updateTodo,
-              onCopyTodo: _copyTodo,
-              onEditTodo: _editTodo,
-            ),
-          ],
-        ),
-        // 右下のプラスボタン
-        floatingActionButton: FloatingActionButton(
-          onPressed: _addTodo,
-          backgroundColor: Colors.green,
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
+          // 現在のタブの内容を表示
+          TodoListWidget(
+            tabIndex: _tabController.index,
+            onUpdateTodo: _updateTodo,
+            onCopyTodo: _copyTodo,
+            onEditTodo: _editTodo,
+          ),
+        ],
+      ),
+      // 右下のプラスボタン
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addTodo,
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

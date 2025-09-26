@@ -31,13 +31,14 @@ class TodoListWidget extends StatelessWidget {
       return _buildEmptyState();
     }
 
-    return ListView.builder(
+    return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 200), // 下部に200pxの余白を追加
-      itemCount: todos.length,
-      itemBuilder: (context, index) {
-        final todo = todos[index];
-        return _buildTodoCard(context, todo);
-      },
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final todo = todos[index];
+          return _buildTodoCard(context, todo);
+        }, childCount: todos.length),
+      ),
     );
   }
 
@@ -57,17 +58,19 @@ class TodoListWidget extends StatelessWidget {
         message = 'タスクがありません';
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-          ),
-        ],
+    return SliverFillRemaining(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            ),
+          ],
+        ),
       ),
     );
   }
