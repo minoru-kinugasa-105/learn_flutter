@@ -16,6 +16,7 @@ class _TodoHomePageState extends State<TodoHomePage>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late List<ScrollController> _scrollControllers;
+  bool _isAppBarVisible = true;
 
   @override
   void initState() {
@@ -29,10 +30,24 @@ class _TodoHomePageState extends State<TodoHomePage>
     _tabController = TabController(length: 3, vsync: this);
 
     // 各タブ用のScrollControllerを作成
-    _scrollControllers = List.generate(3, (index) => ScrollController());
+    _scrollControllers = List.generate(3, (index) {
+      final controller = ScrollController();
+      controller.addListener(() => _onScrollChanged(controller));
+      return controller;
+    });
 
     // タブ切り替え時のリスナーを追加
     _tabController.addListener(_onTabChanged);
+  }
+
+  void _onScrollChanged(ScrollController controller) {
+    // スクロール位置に基づいてアプリバーの表示/非表示を制御
+    final isScrolled = controller.offset > 100;
+    if (isScrolled != !_isAppBarVisible) {
+      setState(() {
+        _isAppBarVisible = !isScrolled;
+      });
+    }
   }
 
   void _onTabChanged() {
@@ -42,6 +57,11 @@ class _TodoHomePageState extends State<TodoHomePage>
 
       final currentIndex = _tabController.index;
       final controller = _scrollControllers[currentIndex];
+
+      // アプリバーを表示状態に戻す
+      setState(() {
+        _isAppBarVisible = true;
+      });
 
       // 少し遅延を入れてスクロール位置をリセット
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -147,29 +167,131 @@ class _TodoHomePageState extends State<TodoHomePage>
     }
 
     return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollControllers[_tabController.index],
-        slivers: [
-          SliverAppBar(
-            title: const Text('Todo App'),
-            floating: true,
-            snap: true,
-            pinned: true,
-            bottom: TabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(text: '未完了'),
-                Tab(text: '完了済み'),
-                Tab(text: '削除済み'),
-              ],
-            ),
+      body: Stack(
+        children: [
+          // メインコンテンツ
+          TabBarView(
+            controller: _tabController,
+            children: [
+              // 未完了タブ
+              CustomScrollView(
+                controller: _scrollControllers[0],
+                slivers: [
+                  // アプリバーの高さ分のスペースを追加
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height:
+                          MediaQuery.of(context).padding.top +
+                          kToolbarHeight +
+                          kTextTabBarHeight,
+                    ),
+                  ),
+                  TodoListWidget(
+                    tabIndex: 0,
+                    onUpdateTodo: _updateTodo,
+                    onCopyTodo: _copyTodo,
+                    onEditTodo: _editTodo,
+                  ),
+                ],
+              ),
+              // 完了済みタブ
+              CustomScrollView(
+                controller: _scrollControllers[1],
+                slivers: [
+                  // アプリバーの高さ分のスペースを追加
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height:
+                          MediaQuery.of(context).padding.top +
+                          kToolbarHeight +
+                          kTextTabBarHeight,
+                    ),
+                  ),
+                  TodoListWidget(
+                    tabIndex: 1,
+                    onUpdateTodo: _updateTodo,
+                    onCopyTodo: _copyTodo,
+                    onEditTodo: _editTodo,
+                  ),
+                ],
+              ),
+              // 削除済みタブ
+              CustomScrollView(
+                controller: _scrollControllers[2],
+                slivers: [
+                  // アプリバーの高さ分のスペースを追加
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height:
+                          MediaQuery.of(context).padding.top +
+                          kToolbarHeight +
+                          kTextTabBarHeight,
+                    ),
+                  ),
+                  TodoListWidget(
+                    tabIndex: 2,
+                    onUpdateTodo: _updateTodo,
+                    onCopyTodo: _copyTodo,
+                    onEditTodo: _editTodo,
+                  ),
+                ],
+              ),
+            ],
           ),
-          // 現在のタブの内容を表示
-          TodoListWidget(
-            tabIndex: _tabController.index,
-            onUpdateTodo: _updateTodo,
-            onCopyTodo: _copyTodo,
-            onEditTodo: _editTodo,
+          // アプリバー（固定）
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            top: _isAppBarVisible ? 0 : -kToolbarHeight - kTextTabBarHeight,
+            left: 0,
+            right: 0,
+            child: Container(
+              color: Colors.white,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ステータスバーの高さ分のスペース
+                  SizedBox(height: MediaQuery.of(context).padding.top),
+                  // アプリバー
+                  Container(
+                    height: kToolbarHeight,
+                    color: Colors.white,
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 16),
+                        const Expanded(
+                          child: Text(
+                            'Todo App',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
+                    ),
+                  ),
+                  // タブバー
+                  Container(
+                    height: kTextTabBarHeight,
+                    color: Colors.white,
+                    child: TabBar(
+                      controller: _tabController,
+                      labelColor: Colors.blue,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: Colors.blue,
+                      tabs: const [
+                        Tab(text: '未完了'),
+                        Tab(text: '完了済み'),
+                        Tab(text: '削除済み'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
