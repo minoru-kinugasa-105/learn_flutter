@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Dartコードのフォーマットと文法チェックを行うpre-commitフック
+
+echo "🔧 Dartコードをフォーマットしています..."
+dart format .
+
+# フォーマットによる変更のみをステージングエリアに追加
+git add -u
+
+echo "🔍 Dartコードの文法チェックを実行しています..."
+dart analyze
+
+# dart analyzeの終了コードをチェック
+if [ $? -ne 0 ]; then
+    echo "❌ 文法エラーが検出されました。コミットを中止します。"
+    echo "エラーを修正してから再度コミットしてください。"
+    exit 1
+fi
+
+echo "✅ コードフォーマットと文法チェックが完了しました。"
+exit 0
+
