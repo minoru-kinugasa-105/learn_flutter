@@ -71,6 +71,28 @@ class _TodoHomePageState extends State<TodoHomePage> {
     }
   }
 
+  /// Todoを編集するメソッド
+  Future<void> _editTodo(
+    Todo todo,
+    String title,
+    String? description,
+    DateTime? dueTime,
+  ) async {
+    await TodoService.editTodo(
+      todo,
+      title: title,
+      description: description,
+      dueTime: dueTime,
+    );
+    setState(() {});
+
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('タスクを編集しました')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!HiveService.isInitialized) {
@@ -97,18 +119,21 @@ class _TodoHomePageState extends State<TodoHomePage> {
               tabIndex: 0,
               onUpdateTodo: _updateTodo,
               onCopyTodo: _copyTodo,
+              onEditTodo: _editTodo,
             ),
             // 完了済みタブ
             TodoListWidget(
               tabIndex: 1,
               onUpdateTodo: _updateTodo,
               onCopyTodo: _copyTodo,
+              onEditTodo: _editTodo,
             ),
             // 削除済みタブ
             TodoListWidget(
               tabIndex: 2,
               onUpdateTodo: _updateTodo,
               onCopyTodo: _copyTodo,
+              onEditTodo: _editTodo,
             ),
           ],
         ),
