@@ -23,7 +23,7 @@ class TodoListWidget extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 200), // 下部に200pxの余白を追加
       itemCount: todos.length,
       itemBuilder: (context, index) {
         final todo = todos[index];
@@ -69,6 +69,8 @@ class TodoListWidget extends StatelessWidget {
       child: ListTile(
         title: Text(
           todo.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             decoration: todo.isCompleted ? TextDecoration.lineThrough : null,
             color: todo.isCompleted ? Colors.grey : null,
@@ -80,6 +82,8 @@ class TodoListWidget extends StatelessWidget {
             if (todo.description != null && todo.description!.isNotEmpty)
               Text(
                 todo.description!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: todo.isCompleted ? Colors.grey : null),
               ),
             if (todo.dueTime != null)
