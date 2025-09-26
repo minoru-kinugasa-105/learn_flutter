@@ -98,3 +98,22 @@ flutter doctor
 
 
 
+
+
+## 実機テスト
+iphone > 設定 > プライバシーとセキュリティ > デベロッパーモード > 許可して再起動
+
+XCode開いて、settings開いて、accounts開いて、自分のAppleIDでログイン
+open ios/Runner.xcworkspace 開いて、RunnerのSigning & CapabilitiesにあるTermを自分のIDにして、 identiferを com.自分の名前.flutterapp にでもしておく
+
+そしたら
+flutter devices
+で出てきた実機のidをコピって
+flutter run -d id
+で実機にrun
+
+一旦エラー吐くから、その状態で
+iPhone > 設定 > 一般 > VPNとデバイス管理 > デベロッパアプリ
+にある自分のメアドのやつを許可する、で自分自信を信頼したデベロッパにする
+
+そうすると勝手にflutterのbuildとインストールが始まる

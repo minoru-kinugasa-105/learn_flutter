@@ -24,4 +24,7 @@ class Todo extends HiveObject {
 
   @HiveField(6)
   DateTime updatedAt = DateTime.now();
+
+  @HiveField(7, defaultValue: false)
+  bool isNotificationSent = false;
 }

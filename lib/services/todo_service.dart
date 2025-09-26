@@ -1,5 +1,6 @@
 import '../models/todo.dart';
 import 'hive_service.dart';
+import 'notification_service.dart';
 
 class TodoService {
   /// Todoを追加する
@@ -14,10 +15,16 @@ class TodoService {
       ..dueTime = dueTime
       ..isCompleted = false
       ..isDeleted = false
+      ..isNotificationSent = false
       ..createdAt = DateTime.now()
       ..updatedAt = DateTime.now();
 
     await HiveService.todoBox.add(todo);
+
+    // 期限がある場合は通知をスケジュール
+    if (dueTime != null) {
+      await NotificationService.scheduleTodoNotification(todo);
+    }
   }
 
   /// Todoの状態を更新する
@@ -26,8 +33,20 @@ class TodoService {
     bool? isCompleted,
     bool? isDeleted,
   }) async {
-    if (isCompleted != null) todo.isCompleted = isCompleted;
-    if (isDeleted != null) todo.isDeleted = isDeleted;
+    if (isCompleted != null) {
+      todo.isCompleted = isCompleted;
+      // 完了した場合は通知をキャンセル
+      if (isCompleted) {
+        await NotificationService.cancelTodoNotification(todo);
+      }
+    }
+    if (isDeleted != null) {
+      todo.isDeleted = isDeleted;
+      // 削除した場合は通知をキャンセル
+      if (isDeleted) {
+        await NotificationService.cancelTodoNotification(todo);
+      }
+    }
     todo.updatedAt = DateTime.now();
     await todo.save();
   }
@@ -40,10 +59,16 @@ class TodoService {
       ..dueTime = originalTodo.dueTime
       ..isCompleted = false
       ..isDeleted = false
+      ..isNotificationSent = false
       ..createdAt = DateTime.now()
       ..updatedAt = DateTime.now();
 
     await HiveService.todoBox.add(copiedTodo);
+
+    // 期限がある場合は通知をスケジュール
+    if (originalTodo.dueTime != null) {
+      await NotificationService.scheduleTodoNotification(copiedTodo);
+    }
   }
 
   /// Todoを編集する
@@ -53,11 +78,20 @@ class TodoService {
     String? description,
     DateTime? dueTime,
   }) async {
+    // 既存の通知をキャンセル
+    await NotificationService.cancelTodoNotification(todo);
+
     todo.title = title;
     todo.description = description;
     todo.dueTime = dueTime;
+    todo.isNotificationSent = false; // 編集時は通知フラグをリセット
     todo.updatedAt = DateTime.now();
     await todo.save();
+
+    // 新しい期限がある場合は通知をスケジュール
+    if (dueTime != null) {
+      await NotificationService.scheduleTodoNotification(todo);
+    }
   }
 
   /// フラグに応じてTodoを分類する

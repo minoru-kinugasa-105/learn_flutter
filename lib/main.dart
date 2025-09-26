@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'services/hive_service.dart';
+import 'services/notification_service.dart';
 import 'screens/todo_home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await HiveService.initialize();
+  await NotificationService.initialize();
+  // 既存のTodoの通知をチェックしてスケジュール
+  await NotificationService.checkAndScheduleNotifications();
   runApp(const MyApp());
 }
 
