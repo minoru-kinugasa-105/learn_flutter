@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import '../models/todo.dart';
 import '../services/hive_service.dart';
 import '../services/todo_service.dart';
 import '../widgets/add_todo_dialog.dart';
 import '../widgets/todo_list_widget.dart';
+import '../widgets/sidebar_widget.dart';
 
 class TodoHomePage extends StatefulWidget {
   const TodoHomePage({super.key});
@@ -17,6 +19,9 @@ class _TodoHomePageState extends State<TodoHomePage>
   late TabController _tabController;
   late List<ScrollController> _scrollControllers;
   bool _isAppBarVisible = true;
+  bool _isSidebarVisible = false;
+  late AnimationController _sidebarAnimationController;
+  late Animation<double> _sidebarAnimation;
 
   @override
   void initState() {
@@ -38,6 +43,18 @@ class _TodoHomePageState extends State<TodoHomePage>
 
     // タブ切り替え時のリスナーを追加
     _tabController.addListener(_onTabChanged);
+
+    // サイドバーアニメーションコントローラーを作成
+    _sidebarAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _sidebarAnimation = Tween<double>(begin: -280.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _sidebarAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
   }
 
   void _onScrollChanged(ScrollController controller) {
@@ -83,6 +100,7 @@ class _TodoHomePageState extends State<TodoHomePage>
       controller.dispose();
     }
     _tabController.dispose();
+    _sidebarAnimationController.dispose();
     super.dispose();
   }
 
@@ -158,6 +176,25 @@ class _TodoHomePageState extends State<TodoHomePage>
         context,
       ).showSnackBar(const SnackBar(content: Text('タスクを編集しました')));
     }
+  }
+
+  /// サイドバーを表示するメソッド
+  void _showSidebar() {
+    setState(() {
+      _isSidebarVisible = true;
+    });
+    _sidebarAnimationController.forward();
+  }
+
+  /// サイドバーを非表示にするメソッド
+  void _hideSidebar() {
+    _sidebarAnimationController.reverse().then((_) {
+      if (mounted) {
+        setState(() {
+          _isSidebarVisible = false;
+        });
+      }
+    });
   }
 
   @override
@@ -238,6 +275,60 @@ class _TodoHomePageState extends State<TodoHomePage>
               ),
             ],
           ),
+
+          // 左端スワイプ検出用のオーバーレイ
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 50, // 左端から50pxの幅でスワイプを検出
+            child: RawGestureDetector(
+              gestures: <Type, GestureRecognizerFactory>{
+                PanGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<
+                      PanGestureRecognizer
+                    >(() => PanGestureRecognizer(), (
+                      PanGestureRecognizer instance,
+                    ) {
+                      instance.onStart = (details) {
+                        print(
+                          'RawGestureDetector: スワイプ開始: x=${details.globalPosition.dx}',
+                        ); // デバッグ用ログ
+                      };
+                      instance.onUpdate = (details) {
+                        print(
+                          'RawGestureDetector: スワイプ中: delta=${details.delta.dx}',
+                        ); // デバッグ用ログ
+                        if (details.delta.dx > 10) {
+                          // 10px以上右に移動したら
+                          print('RawGestureDetector: 右方向へのスワイプを検出'); // デバッグ用ログ
+                          _showSidebar();
+                        }
+                      };
+                      instance.onEnd = (details) {
+                        print(
+                          'RawGestureDetector: スワイプ終了: velocity=${details.velocity.pixelsPerSecond.dx}',
+                        ); // デバッグ用ログ
+                        if (details.velocity.pixelsPerSecond.dx > 0) {
+                          _showSidebar();
+                        }
+                      };
+                    }),
+                TapGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+                      () => TapGestureRecognizer(),
+                      (TapGestureRecognizer instance) {
+                        instance.onTap = () {
+                          print('RawGestureDetector: 左端エリアをタップしました'); // デバッグ用ログ
+                          _showSidebar();
+                        };
+                      },
+                    ),
+              },
+              child: Container(color: Colors.transparent, width: 50),
+            ),
+          ),
+
           // アプリバー（固定）
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
@@ -259,6 +350,10 @@ class _TodoHomePageState extends State<TodoHomePage>
                     child: Row(
                       children: [
                         const SizedBox(width: 16),
+                        IconButton(
+                          onPressed: _showSidebar,
+                          icon: const Icon(Icons.menu, color: Colors.black87),
+                        ),
                         const Expanded(
                           child: Text(
                             'Todo App',
@@ -293,6 +388,29 @@ class _TodoHomePageState extends State<TodoHomePage>
               ),
             ),
           ),
+
+          // サイドバーオーバーレイ（背景の暗い部分）
+          if (_isSidebarVisible)
+            GestureDetector(
+              onTap: _hideSidebar,
+              child: Container(
+                color: Colors.black.withOpacity(0.5),
+                width: double.infinity,
+                height: double.infinity,
+              ),
+            ),
+
+          // サイドバー
+          if (_isSidebarVisible)
+            AnimatedBuilder(
+              animation: _sidebarAnimation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(_sidebarAnimation.value, 0),
+                  child: SidebarWidget(onClose: _hideSidebar),
+                );
+              },
+            ),
         ],
       ),
       // 右下のプラスボタン
