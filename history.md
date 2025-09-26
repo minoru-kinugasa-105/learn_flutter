@@ -23,6 +23,8 @@ flutter --version
     flutter create .
 ## 依存解決
     flutter pub get
+## 追加
+    flutter pub add name
 ## シュミレーター起動
     open -a Simulator
     flutter run -d uuid
