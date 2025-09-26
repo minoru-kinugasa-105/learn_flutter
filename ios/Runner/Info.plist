@@ -47,5 +47,9 @@
 	</array>
 	<key>NSFaceIDUsageDescription</key>
 	<string>削除済みタスクを閲覧するためにFaceID認証を使用します</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 </dict>
 </plist>

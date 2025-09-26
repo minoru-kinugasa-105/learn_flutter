@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/audio_service.dart';
 
 class SidebarWidget extends StatelessWidget {
   final VoidCallback onClose;
@@ -87,7 +88,7 @@ class SidebarWidget extends StatelessWidget {
                   title: '音声のバックグラウンド再生',
                   subtitle: '音楽をバックグラウンドで再生',
                   onTap: () {
-                    _showComingSoon(context, '音声のバックグラウンド再生');
+                    _showAudioControlDialog(context);
                   },
                 ),
                 _buildMenuItem(
@@ -176,6 +177,116 @@ class SidebarWidget extends StatelessWidget {
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         hoverColor: Colors.blue.withOpacity(0.05),
+      ),
+    );
+  }
+
+  void _showAudioControlDialog(BuildContext context) {
+    final audioService = AudioService();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.music_note, color: Colors.blue),
+              SizedBox(width: 8),
+              Expanded(child: Text('音声のバックグラウンド再生')),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'mrs.mp3を無限ループでバックグラウンド再生します。',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        await audioService.startBackgroundPlayback();
+                        setState(() {});
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('音声のバックグラウンド再生を開始しました'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('エラー: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('再生開始'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        await audioService.stopPlayback();
+                        setState(() {});
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('音声の再生を停止しました'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('エラー: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.stop),
+                    label: const Text('停止'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '状態: ${audioService.isPlaying ? "再生中" : "停止中"}',
+                style: TextStyle(
+                  color: audioService.isPlaying ? Colors.green : Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('閉じる'),
+            ),
+          ],
+        ),
       ),
     );
   }
