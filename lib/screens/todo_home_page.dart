@@ -5,6 +5,7 @@ import '../services/hive_service.dart';
 import '../services/todo_service.dart';
 import '../widgets/add_todo_dialog.dart';
 import '../widgets/todo_list_widget.dart';
+import '../widgets/deleted_todo_list_widget.dart';
 import '../widgets/sidebar_widget.dart';
 
 class TodoHomePage extends StatefulWidget {
@@ -265,8 +266,7 @@ class _TodoHomePageState extends State<TodoHomePage>
                           kTextTabBarHeight,
                     ),
                   ),
-                  TodoListWidget(
-                    tabIndex: 2,
+                  DeletedTodoListWidget(
                     onUpdateTodo: _updateTodo,
                     onCopyTodo: _copyTodo,
                     onEditTodo: _editTodo,
