@@ -5,11 +5,13 @@ import '../services/todo_service.dart';
 class TodoListWidget extends StatelessWidget {
   final int tabIndex;
   final Function(Todo todo, {bool? isCompleted, bool? isDeleted}) onUpdateTodo;
+  final Function(Todo todo) onCopyTodo;
 
   const TodoListWidget({
     super.key,
     required this.tabIndex,
     required this.onUpdateTodo,
+    required this.onCopyTodo,
   });
 
   @override
@@ -97,15 +99,39 @@ class TodoListWidget extends StatelessWidget {
           children: [
             if (tabIndex == 0) // 未完了タブの場合
               IconButton(
-                icon: const Icon(Icons.check, color: Colors.green),
+                visualDensity: const VisualDensity(
+                  horizontal: -4.0,
+                  vertical: -4.0,
+                ),
+                icon: const Icon(Icons.check, color: Colors.green, size: 20),
                 onPressed: () => onUpdateTodo(todo, isCompleted: true),
                 tooltip: '完了にする',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             if (tabIndex == 0 || tabIndex == 1) // 未完了または完了済みタブの場合
               IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
+                visualDensity: const VisualDensity(
+                  horizontal: -4.0,
+                  vertical: -4.0,
+                ),
+                icon: const Icon(Icons.copy, color: Colors.blue, size: 18),
+                onPressed: () => onCopyTodo(todo),
+                tooltip: 'コピーする',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            if (tabIndex == 0 || tabIndex == 1) // 未完了または完了済みタブの場合
+              IconButton(
+                visualDensity: const VisualDensity(
+                  horizontal: -4.0,
+                  vertical: -4.0,
+                ),
+                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                 onPressed: () => onUpdateTodo(todo, isDeleted: true),
                 tooltip: '削除する',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             if (tabIndex == 1) // 完了済みタブの場合
               IconButton(

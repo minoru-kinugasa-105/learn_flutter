@@ -44,6 +44,9 @@ flutter --version
 ## Android SDKから直接接続中のデバイス確認
     adb devices
 
+## 成形
+    dart format .
+
 
 ### CocoaPods
 | プラグイン                | 使える機能         |

@@ -32,6 +32,20 @@ class TodoService {
     await todo.save();
   }
 
+  /// Todoをコピーする
+  static Future<void> copyTodo(Todo originalTodo) async {
+    final copiedTodo = Todo()
+      ..title = '${originalTodo.title} (コピー)'
+      ..description = originalTodo.description
+      ..dueTime = originalTodo.dueTime
+      ..isCompleted = false
+      ..isDeleted = false
+      ..createdAt = DateTime.now()
+      ..updatedAt = DateTime.now();
+
+    await HiveService.todoBox.add(copiedTodo);
+  }
+
   /// フラグに応じてTodoを分類する
   static List<Todo> getTodosByStatus(int tabIndex) {
     final allTodos = HiveService.todoBox.values.toList();

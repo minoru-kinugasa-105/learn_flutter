@@ -59,6 +59,18 @@ class _TodoHomePageState extends State<TodoHomePage> {
     setState(() {});
   }
 
+  /// Todoをコピーするメソッド
+  Future<void> _copyTodo(Todo todo) async {
+    await TodoService.copyTodo(todo);
+    setState(() {});
+
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('タスクをコピーしました')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!HiveService.isInitialized) {
@@ -81,11 +93,23 @@ class _TodoHomePageState extends State<TodoHomePage> {
         body: TabBarView(
           children: [
             // 未完了タブ
-            TodoListWidget(tabIndex: 0, onUpdateTodo: _updateTodo),
+            TodoListWidget(
+              tabIndex: 0,
+              onUpdateTodo: _updateTodo,
+              onCopyTodo: _copyTodo,
+            ),
             // 完了済みタブ
-            TodoListWidget(tabIndex: 1, onUpdateTodo: _updateTodo),
+            TodoListWidget(
+              tabIndex: 1,
+              onUpdateTodo: _updateTodo,
+              onCopyTodo: _copyTodo,
+            ),
             // 削除済みタブ
-            TodoListWidget(tabIndex: 2, onUpdateTodo: _updateTodo),
+            TodoListWidget(
+              tabIndex: 2,
+              onUpdateTodo: _updateTodo,
+              onCopyTodo: _copyTodo,
+            ),
           ],
         ),
         // 右下のプラスボタン
